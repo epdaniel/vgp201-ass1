@@ -30,7 +30,7 @@
 #define IGL_MOD_ALT             0x0004
 #define IGL_MOD_SUPER           0x0008
 
-
+typedef std::set<std::pair<double, int>> PriorityQueue;
 
 namespace igl
 {
@@ -51,6 +51,7 @@ namespace glfw
     Viewer();
     ~Viewer();
     // Mesh IO
+	bool load_configuration();
     IGL_INLINE bool load_mesh_from_file(const std::string & mesh_file_name);
     IGL_INLINE bool save_mesh_to_file(const std::string & mesh_file_name);
    
@@ -69,6 +70,10 @@ namespace glfw
     IGL_INLINE void open_dialog_save_mesh();
 
 	IGL_INLINE void draw() {}
+	//ASS2:
+	void reset();
+	bool simplify();
+	
     ////////////////////////
     // Multi-mesh methods //
     ////////////////////////

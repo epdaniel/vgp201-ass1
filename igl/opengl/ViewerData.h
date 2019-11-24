@@ -8,6 +8,7 @@
 #ifndef IGL_VIEWERDATA_H
 #define IGL_VIEWERDATA_H
 
+
 #include "../igl_inline.h"
 #include "MeshGL.h"
 #include <cassert>
@@ -16,6 +17,7 @@
 //#include <Eigen/Core>
 #include <memory>
 #include <vector>
+#include <set>
 
 // Alec: This is a mesh class containing a variety of data types (normals,
 // overlays, material colors, etc.)
@@ -147,8 +149,19 @@ public:
   // Copy visualization options from one viewport to another
   //IGL_INLINE void copy_options(const ViewerCore &from, const ViewerCore &to);
 
-  Eigen::MatrixXd V; // Vertices of the current mesh (#V x 3)
-  Eigen::MatrixXi F; // Faces of the mesh (#F x 3)
+  //Ass2: Data Structures for decimation
+  typedef std::set<std::pair<double, int> > PriorityQueue;
+  Eigen::VectorXi EMAP;
+  Eigen::MatrixXi E;
+  Eigen::MatrixXi EF;
+  Eigen::MatrixXi EI;
+  PriorityQueue* Q;
+  std::vector<PriorityQueue::iterator >* Qit;
+  Eigen::MatrixXd C;
+  int num_collapsed;
+
+  Eigen::MatrixXd V, OV; // Vertices of the current mesh (#V x 3)
+  Eigen::MatrixXi F, OF; // Faces of the mesh (#F x 3)
 
   // Per face attributes
   Eigen::MatrixXd F_normals; // One normal per face

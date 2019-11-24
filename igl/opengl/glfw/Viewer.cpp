@@ -42,12 +42,21 @@
 #include <igl/unproject.h>
 #include <igl/serialize.h>
 
+//Ass2:
+#include <igl/edge_flaps.h>
+#include <igl/shortest_edge_and_midpoint.h>
+#include <igl/read_triangle_mesh.h>
+#include <igl/opengl/glfw/Viewer.h>
+#include <Eigen/Core>
+#include <igl/collapse_edge.h>
+//---------------------
+
 // Internal global variables used for glfw event handling
 //static igl::opengl::glfw::Viewer * __viewer;
 static double highdpi = 1;
 static double scroll_x = 0;
 static double scroll_y = 0;
-
+using namespace std;
 
 namespace igl
 {
@@ -109,7 +118,8 @@ namespace glfw
   [,]     Toggle between cameras
   1,2     Toggle between models
   ;       Toggle vertex labels
-  :       Toggle face labels)"
+  :       Toggle face labels
+  space	  Decimate model)"
 );
     std::cout<<usage<<std::endl;
 #endif
@@ -117,6 +127,89 @@ namespace glfw
 
   IGL_INLINE Viewer::~Viewer()
   {
+  }
+
+  void Viewer::reset() {
+	Eigen::MatrixXi F = data().OF;
+	Eigen::MatrixXd V = data().OV;
+	Eigen::VectorXi EMAP;
+	Eigen::MatrixXi E, EF, EI;
+	Eigen::MatrixXd C;
+	PriorityQueue* Q = new PriorityQueue;
+	std::vector<PriorityQueue::iterator >* Qit = new std::vector<PriorityQueue::iterator >;
+	int num_collapsed = 0;
+	edge_flaps(F, E, EMAP, EF, EI);
+	Qit->resize(E.rows());
+
+	C.resize(E.rows(), V.cols());
+	Eigen::VectorXd costs(E.rows());
+	Q->clear();
+	for (int e = 0; e < E.rows(); e++)
+	{
+		double cost = e;
+		Eigen::RowVectorXd p(1, 3);
+		shortest_edge_and_midpoint(e, V, F, E, EMAP, EF, EI, cost, p);
+		C.row(e) = p;
+		(*Qit)[e] = Q->insert(std::pair<double, int>(cost, e)).first;
+	}
+	data().num_collapsed = num_collapsed;
+	data().E = E;
+	data().EF = EF;
+	data().EI = EI;
+	data().EMAP = EMAP;
+	data().Q = Q; 
+	data().Qit = Qit;
+	data().C = C;
+	data().set_mesh(V, F);
+  }
+
+  bool Viewer::simplify() {
+	bool something_collapsed = false;
+	// collapse edge
+
+	const int max_iter = std::ceil(0.05*data().Q->size());
+	for (int j = 0; j < max_iter; j++)
+	{
+		if (!collapse_edge(shortest_edge_and_midpoint, data().V, data().F, data().E, data().EMAP, data().EF, data().EI, *(data().Q), *(data().Qit), data().C))
+		{
+			break;
+		}
+		something_collapsed = true;
+		data().num_collapsed++;
+	}
+
+	if (something_collapsed)
+	{
+		Eigen::MatrixXd V = data().V; 
+		Eigen::MatrixXi F = data().F;
+		data().clear();
+		data().set_mesh(V, F);
+		data().set_face_based(true);
+	}
+	  
+	return false;
+  }
+
+  bool  Viewer::load_configuration()
+  {
+	  ifstream myReadFile;
+	  myReadFile.open("configuration.txt");
+	  string path;
+	  if (myReadFile.is_open()) {
+		  while (!myReadFile.eof()) {
+			  getline(myReadFile, path);
+			  cout << "Loading: " << path;
+			  cout << "\n";
+			  load_mesh_from_file(path);
+		  }
+	  }
+	  else {
+		  cout << "Error loading configuartion file\n";
+		return false;
+	  }
+	  cout << "Done loading\n";
+	  myReadFile.close();
+	  return true;
   }
 
   IGL_INLINE bool Viewer::load_mesh_from_file(
@@ -192,7 +285,9 @@ namespace glfw
     //for (unsigned int i = 0; i<plugins.size(); ++i)
     //  if (plugins[i]->post_load())
     //    return true;
-
+	data().OV = data().V;
+	data().OF = data().F;
+	reset();
     return true;
   }
 
