@@ -73,8 +73,9 @@ namespace glfw
 	//ASS2:
 	void reset();
 	bool simplify();
-	
-    ////////////////////////
+	void initEdgeErrors();
+	bool optimalSimplify();
+	////////////////////////
     // Multi-mesh methods //
     ////////////////////////
 

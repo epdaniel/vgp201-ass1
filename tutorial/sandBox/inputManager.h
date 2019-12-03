@@ -134,6 +134,12 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			rndr->core().toggle(scn->data().show_faces);
 			break;
 		}
+		case 'R':
+		case 'r':
+		{
+			scn->reset();
+			break;
+		}
 		case '1':
 		case '2':
 		{
@@ -155,6 +161,11 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			break;
 		case ' ':
 			printf("Space pressed, decimating!\n");
+			scn->optimalSimplify();
+			break;
+		case 'z':
+		case 'Z':
+			printf("Z pressed, regular simplify called!\n");
 			scn->simplify();
 			break;
 		default: break;//do nothing

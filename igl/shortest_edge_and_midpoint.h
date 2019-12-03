@@ -8,8 +8,12 @@
 #ifndef IGL_SHORTEST_EDGE_AND_MIDPOINT_H
 #define IGL_SHORTEST_EDGE_AND_MIDPOINT_H
 #include "igl_inline.h"
+
 #include <Eigen/Core>
 #include <vector>
+
+extern Eigen::MatrixXd face_normals_dec;
+
 namespace igl
 {
   // Cost and placement function compatible with igl::decimate. The cost of
@@ -38,6 +42,17 @@ namespace igl
     const Eigen::MatrixXi & /*EI*/,
     double & cost,
     Eigen::RowVectorXd & p);
+
+  IGL_INLINE void edgeErrorAndOptimalPlacement(
+	  const int e,
+	  const Eigen::MatrixXd & V,
+	  const Eigen::MatrixXi & /*F*/,
+	  const Eigen::MatrixXi & E,
+	  const Eigen::VectorXi & /*EMAP*/,
+	  const Eigen::MatrixXi & /*EF*/,
+	  const Eigen::MatrixXi & /*EI*/,
+	  double & cost,
+	  Eigen::RowVectorXd & p);
 }
 
 #ifndef IGL_STATIC_LIBRARY

@@ -41,14 +41,16 @@
 #include <igl/snap_to_canonical_view_quat.h>
 #include <igl/unproject.h>
 #include <igl/serialize.h>
+#include <igl/circulation.h>
+#include <igl/igl_inline.h>
 
 //Ass2:
 #include <igl/edge_flaps.h>
 #include <igl/shortest_edge_and_midpoint.h>
 #include <igl/read_triangle_mesh.h>
-#include <igl/opengl/glfw/Viewer.h>
 #include <Eigen/Core>
 #include <igl/collapse_edge.h>
+#include <vector>
 //---------------------
 
 // Internal global variables used for glfw event handling
@@ -142,7 +144,6 @@ namespace glfw
 	Qit->resize(E.rows());
 
 	C.resize(E.rows(), V.cols());
-	Eigen::VectorXd costs(E.rows());
 	Q->clear();
 	for (int e = 0; e < E.rows(); e++)
 	{
@@ -188,6 +189,70 @@ namespace glfw
 	}
 	  
 	return false;
+  }
+
+  void Viewer::initEdgeErrors() {
+	  Eigen::MatrixXi F = data().F = data().OF;
+	  Eigen::MatrixXd V = data().V = data().OV;
+	  Eigen::VectorXi EMAP;
+	  Eigen::MatrixXi E, EF, EI;
+	  Eigen::MatrixXd C;
+	  PriorityQueue* Q = new PriorityQueue;
+	  std::vector<PriorityQueue::iterator >* Qit = new std::vector<PriorityQueue::iterator >;
+	  int num_collapsed = 0;
+	  edge_flaps(F, E, EMAP, EF, EI);
+	  Qit->resize(E.rows());
+
+	  C.resize(E.rows(), V.cols());
+	  Q->clear();
+	  face_normals_dec = data().F_normals;
+	  for (int e = 0; e < E.rows(); e++)
+	  {
+		  double cost = e;
+		  Eigen::RowVectorXd p(1, 3);
+		  edgeErrorAndOptimalPlacement(e, V, F, E, EMAP, EF, EI, cost, p);
+		  C.row(e) = p;
+		  //std::cout << "Edge error (" << e << "): " << cost << endl;
+		  (*Qit)[e] = Q->insert(std::pair<double, int>(cost, e)).first;
+	  }
+	  data().num_collapsed = num_collapsed;
+	  data().E = E;
+	  data().EF = EF;
+	  data().EI = EI;
+	  data().EMAP = EMAP;
+	  data().Q = Q;
+	  data().Qit = Qit;
+	  data().C = C;
+	  data().set_mesh(V, F);
+  }
+
+  bool Viewer::optimalSimplify() {
+	  bool something_collapsed = false;
+	  // collapse edge
+
+	  const int max_iter = std::ceil(0.05*data().Q->size());
+
+	  face_normals_dec = data().F_normals;
+	  for (int j = 0; j < max_iter; j++)
+	  {
+		  if (!collapse_edge(edgeErrorAndOptimalPlacement, data().V, data().F, data().E, data().EMAP, data().EF, data().EI, *(data().Q), *(data().Qit), data().C))
+		  {
+			  break;
+		  }
+		  something_collapsed = true;
+		  data().num_collapsed++;
+	  }
+
+	  if (something_collapsed)
+	  {
+		  Eigen::MatrixXd V = data().V;
+		  Eigen::MatrixXi F = data().F;
+		  data().clear();
+		  data().set_mesh(V, F);
+		  data().set_face_based(true);
+	  }
+
+	  return false;
   }
 
   bool  Viewer::load_configuration()
@@ -287,8 +352,9 @@ namespace glfw
     //    return true;
 	data().OV = data().V;
 	data().OF = data().F;
-	reset();
-    return true;
+	//reset();
+	initEdgeErrors();
+	return true;
   }
 
   IGL_INLINE bool Viewer::save_mesh_to_file(
