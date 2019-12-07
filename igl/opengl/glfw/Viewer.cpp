@@ -205,6 +205,7 @@ namespace glfw
 
 	  C.resize(E.rows(), V.cols());
 	  Q->clear();
+	  doPrint = false; //don't print errors when initializing for quicker performance
 	  face_normals_dec = data().F_normals;
 	  for (int e = 0; e < E.rows(); e++)
 	  {
@@ -226,12 +227,13 @@ namespace glfw
 	  data().set_mesh(V, F);
   }
 
-  bool Viewer::optimalSimplify() {
+  bool Viewer::optimalSimplify(bool printFlag) {
 	  bool something_collapsed = false;
 	  // collapse edge
 
 	  const int max_iter = std::ceil(0.05*data().Q->size());
 
+	  doPrint = printFlag;
 	  face_normals_dec = data().F_normals;
 	  for (int j = 0; j < max_iter; j++)
 	  {

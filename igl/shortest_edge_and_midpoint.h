@@ -13,6 +13,7 @@
 #include <vector>
 
 extern Eigen::MatrixXd face_normals_dec;
+extern bool doPrint;
 
 namespace igl
 {

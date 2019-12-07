@@ -74,7 +74,7 @@ namespace glfw
 	void reset();
 	bool simplify();
 	void initEdgeErrors();
-	bool optimalSimplify();
+	bool optimalSimplify(bool doPrint);
 	////////////////////////
     // Multi-mesh methods //
     ////////////////////////

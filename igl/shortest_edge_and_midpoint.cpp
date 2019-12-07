@@ -11,6 +11,7 @@
 #include <Eigen/LU>
 
 Eigen::MatrixXd face_normals_dec;
+bool doPrint;
 
 IGL_INLINE void igl::shortest_edge_and_midpoint(
   const int e,
@@ -67,5 +68,6 @@ IGL_INLINE void igl::edgeErrorAndOptimalPlacement(
 	//p = 0.5*(V.row(v1) + V.row(v2)); 
 
 	cost = vtag.transpose() *  Q * vtag;
-	std::cout << "edge " << e << ", cost = " << cost << ", new v position (" << p << ")" << std::endl;
+	if(doPrint)
+		std::cout << "edge " << e << ", cost = " << cost << ", new v position (" << p << ")" << std::endl;
 }

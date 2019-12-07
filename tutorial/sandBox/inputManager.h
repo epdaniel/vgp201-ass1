@@ -160,8 +160,13 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			scn->data().show_faceid = !scn->data().show_faceid;
 			break;
 		case ' ':
-			printf("Space pressed, decimating!\n");
-			scn->optimalSimplify();
+			printf("Space pressed, decimating with prints\n");
+			scn->optimalSimplify(true);
+			break;
+		case 'x':
+		case 'X':
+			printf("X pressed, decimating without prints\n");
+			scn->optimalSimplify(false);
 			break;
 		case 'z':
 		case 'Z':
