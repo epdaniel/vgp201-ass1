@@ -4,6 +4,8 @@
 #include <igl/unproject_onto_mesh.h>
 #include "igl/look_at.h"
 #include <Eigen/Dense>
+#include <iostream>
+using namespace std;
 Renderer::Renderer() : selected_core_index(0),
 next_core_id(2)
 {
@@ -66,7 +68,11 @@ IGL_INLINE void Renderer::draw( GLFWwindow* window)
 		{
 			if (mesh.is_visible & core.id)
 			{
-				core.draw(scn->MakeTrans(),mesh);
+				Matrix4f parents = Matrix4f().Identity();
+				if(mesh.id > 0)
+					parents = scn->ParentsTrans(mesh.id);
+				Matrix4f temp = scn->MakeTrans() * parents;
+				core.draw(temp, mesh);
 			}
 		}
 	}
@@ -99,18 +105,43 @@ void Renderer::MouseProcessing(int button)
 	
 	if (button == 1)
 	{
-
-		scn->data().MyTranslate(Eigen::Vector3f(-xrel / 2000.0f, 0, 0));
-		scn->data().MyTranslate(Eigen::Vector3f(0,yrel / 2000.0f,0));
-		
+		if (scn->selected_data_index > 0) {
+			scn->data(1).MyTranslate(Eigen::Vector3f(-xrel / 180.0f, 0, 0));
+			scn->data(1).MyTranslate(Eigen::Vector3f(0, yrel / 180.0f, 0));
+		}
+		else{
+			scn->data().MyTranslate(Eigen::Vector3f(-xrel / 180.0f, 0, 0));
+			scn->data().MyTranslate(Eigen::Vector3f(0,yrel / 180.0f,0));
+		}
 	}
 	else
 	{
-		scn->data().MyRotate(Eigen::Vector3f(1,0,0),xrel / 180.0f);
-		scn->data().MyRotate(Eigen::Vector3f(0, 0,1),yrel / 180.0f);
+		scn->data().MyRotate(Eigen::Vector3f(0, 1, 0),xrel / 180.0f, true);
+		scn->data().MyRotate(Eigen::Vector3f(-1, 0, 0),yrel / 180.0f, false);
 	}
 	
 }
+
+void Renderer::rotateWithKeys(int key){
+	int step = 10;
+	switch (key) {
+		case GLFW_KEY_UP:
+			scn->data().MyRotate(Eigen::Vector3f(-1, 0, 0), step / 180.0f, false);
+			break;
+		case GLFW_KEY_DOWN:
+			scn->data().MyRotate(Eigen::Vector3f(1, 0, 0), step / 180.0f, false);
+			break;
+		case GLFW_KEY_LEFT:
+			scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), step / 180.0f, true);
+			break;
+		case GLFW_KEY_RIGHT:
+			scn->data().MyRotate(Eigen::Vector3f(0, -1, 0), step / 180.0f, true);
+			break;
+		default: break;
+	}
+}
+
+
 
 Renderer::~Renderer()
 {
@@ -128,7 +159,7 @@ bool Renderer::Picking(double newx, double newy, double* dist)
 		Eigen::Matrix4f view = Eigen::Matrix4f::Identity();
 		igl::look_at(core().camera_eye, core().camera_center, core().camera_up, view);
 		view = view * (core().trackball_angle * Eigen::Scaling(core().camera_zoom * core().camera_base_zoom)
-				* Eigen::Translation3f(core().camera_translation + core().camera_base_translation)).matrix() * scn->MakeTrans() * scn->data().MakeTrans();
+				* Eigen::Translation3f(core().camera_translation + core().camera_base_translation)).matrix() * scn->MakeTrans() * scn->ParentsTrans(scn->selected_data_index) * scn->data().MakeTrans();
 		if (igl::unproject_onto_mesh(Eigen::Vector2f(x, y), view,
  			core().proj, core().viewport, scn->data().V, scn->data().F, fid, bc))		
 		{
@@ -204,7 +235,7 @@ IGL_INLINE void Renderer::resize(GLFWwindow* window,int w, int h)
 
 	IGL_INLINE bool Renderer::erase_core(const size_t index)
 	{
-		assert((index >= 0 && index < core_list.size()) && "index should be in bounds");
+		assert((index >= 0 && index < core_list.size()) && "index should be in b		ounds");
 		//assert(data_list.size() >= 1);
 		if (core_list.size() == 1)
 		{

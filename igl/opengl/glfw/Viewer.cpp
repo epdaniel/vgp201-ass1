@@ -164,6 +164,12 @@ namespace glfw
 	data().set_mesh(V, F);
   }
 
+  Eigen::Matrix4f Viewer::ParentsTrans(int index) {
+	  if (index <= 1)
+		  return Eigen::Transform<float, 3, Eigen::Affine>::Identity().matrix();
+	  return ParentsTrans(index - 1) * data_list[index - 1].MakeTrans();
+  }
+
   bool Viewer::simplify() {
 	bool something_collapsed = false;
 	// collapse edge

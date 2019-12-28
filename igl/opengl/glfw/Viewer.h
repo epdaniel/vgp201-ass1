@@ -75,6 +75,8 @@ namespace glfw
 	bool simplify();
 	void initEdgeErrors();
 	bool optimalSimplify(bool doPrint);
+	//ASS3:
+	Eigen::Matrix4f ParentsTrans(int index);
 	////////////////////////
     // Multi-mesh methods //
     ////////////////////////

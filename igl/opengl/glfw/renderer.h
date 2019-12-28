@@ -88,6 +88,7 @@ public:
 	void SetScene(igl::opengl::glfw::Viewer* scn);
 	void UpdatePosition(double xpos, double ypos);
 	void MouseProcessing(int button);
+	void rotateWithKeys(int key);
 	inline igl::opengl::glfw::Viewer* GetScene() {
 		return scn;
 	}
