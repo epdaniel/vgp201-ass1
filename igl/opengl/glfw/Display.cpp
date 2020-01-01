@@ -120,8 +120,9 @@ bool Display::launch_rendering(bool loop)
 	
 	while (!glfwWindowShouldClose(window))
 	{
-
 		double tic = igl::get_seconds();
+		if (renderer->GetScene()->IKon)
+			renderer->GetScene()->animateIK();
 		renderer->draw(window);
 		glfwSwapBuffers(window);
 		if (renderer->core().is_animating || frame_counter++ < num_extra_frames)

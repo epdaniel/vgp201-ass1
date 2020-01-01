@@ -105,7 +105,11 @@ void Renderer::MouseProcessing(int button)
 	
 	if (button == 1)
 	{
-		if (scn->selected_data_index > 0) {
+		if (scn->selected_data_index == -1) {
+			scn->MyTranslate(Eigen::Vector3f(-xrel / 180.0f, 0, 0));
+			scn->MyTranslate(Eigen::Vector3f(0, yrel / 180.0f, 0));
+		}
+		else if (scn->selected_data_index > 0) {
 			scn->data(1).MyTranslate(Eigen::Vector3f(-xrel / 180.0f, 0, 0));
 			scn->data(1).MyTranslate(Eigen::Vector3f(0, yrel / 180.0f, 0));
 		}
@@ -116,28 +120,52 @@ void Renderer::MouseProcessing(int button)
 	}
 	else
 	{
-		scn->data().MyRotate(Eigen::Vector3f(0, 1, 0),xrel / 180.0f, true);
-		scn->data().MyRotate(Eigen::Vector3f(-1, 0, 0),yrel / 180.0f, false);
+		if (scn->selected_data_index == -1) {
+			scn->MyRotate(Eigen::Vector3f(0, -1, 0), xrel / 180.0f, true);
+			scn->MyRotate(Eigen::Vector3f(-1, 0, 0), yrel / 180.0f, false);
+		}else {
+			scn->data().MyRotate(Eigen::Vector3f(0, -1, 0),xrel / 180.0f, true);
+			scn->data().MyRotate(Eigen::Vector3f(-1, 0, 0),yrel / 180.0f, false);
+		}
 	}
 	
 }
 
 void Renderer::rotateWithKeys(int key){
 	int step = 10;
-	switch (key) {
+	if (scn->selected_data_index == -1) {
+		switch (key) {
 		case GLFW_KEY_UP:
-			scn->data().MyRotate(Eigen::Vector3f(-1, 0, 0), step / 180.0f, false);
+			scn->MyRotate(Eigen::Vector3f(-1, 0, 0), step / 180.0f, false);
 			break;
 		case GLFW_KEY_DOWN:
-			scn->data().MyRotate(Eigen::Vector3f(1, 0, 0), step / 180.0f, false);
+			scn->MyRotate(Eigen::Vector3f(1, 0, 0), step / 180.0f, false);
 			break;
 		case GLFW_KEY_LEFT:
-			scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), step / 180.0f, true);
+			scn->MyRotate(Eigen::Vector3f(0, 1, 0), step / 180.0f, true);
 			break;
 		case GLFW_KEY_RIGHT:
-			scn->data().MyRotate(Eigen::Vector3f(0, -1, 0), step / 180.0f, true);
+			scn->MyRotate(Eigen::Vector3f(0, -1, 0), step / 180.0f, true);
 			break;
 		default: break;
+		}
+	}
+	else {
+		switch (key) {
+			case GLFW_KEY_UP:
+				scn->data().MyRotate(Eigen::Vector3f(-1, 0, 0), step / 180.0f, false);
+				break;
+			case GLFW_KEY_DOWN:
+				scn->data().MyRotate(Eigen::Vector3f(1, 0, 0), step / 180.0f, false);
+				break;
+			case GLFW_KEY_LEFT:
+				scn->data().MyRotate(Eigen::Vector3f(0, 1, 0), step / 180.0f, true);
+				break;
+			case GLFW_KEY_RIGHT:
+				scn->data().MyRotate(Eigen::Vector3f(0, -1, 0), step / 180.0f, true);
+				break;
+			default: break;
+		}
 	}
 }
 

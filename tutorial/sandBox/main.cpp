@@ -5,8 +5,8 @@ using namespace std;
 static void drawDotsAndLines(igl::opengl::glfw::Viewer &viewer) {
 	Eigen::Matrix4f parents = Eigen::Matrix4f().Identity();
 	for (int i = 1; i <= 4; i++) {
-		viewer.data_list[i].SetCenterOfRotation(Eigen::Vector3f(0, -0.8, 0));
 		viewer.data_list[i].MyTranslate(Eigen::Vector3f(0, 1.6, 0));
+		viewer.data_list[i].SetCenterOfRotation(Eigen::Vector3f(0, -0.8, 0));
 
 		viewer.data_list[i].show_overlay_depth = false;
 		viewer.data_list[i].show_lines = false;

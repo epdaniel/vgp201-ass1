@@ -4,41 +4,32 @@
 static void glfw_mouse_press(GLFWwindow* window, int button, int action, int modifier)
 {
 
-  Renderer* rndr = (Renderer*) glfwGetWindowUserPointer(window);
-  
-  if (action == GLFW_PRESS)
-  {
-	  double x2, y2;
-	  glfwGetCursorPos(window, &x2, &y2);
-	  igl::opengl::glfw::Viewer* scn = rndr->GetScene();
-	  bool found = false;
-	  int i = 0, savedIndx = scn->selected_data_index;
-	  double minDist = -1;
-	  int minIndex = -1;
-	  for (; i < scn->data_list.size();i++)
-	  { 
-		  double dist;
-		  scn->selected_data_index = i;
-		  found = rndr->Picking(x2, y2, &dist);
-		  if (found && (minDist == -1 || dist < minDist)) {
-			  minDist = dist;
-			  minIndex = i;
-		  }
-	  }
-	  
-	  if(minDist == -1)
-	  {
-		  std::cout << "not found " << std::endl;
-		  scn->selected_data_index = savedIndx;
-	  }
-	  else { 
-		  scn->selected_data_index = minIndex;
-		  std::cout << "found " << minIndex << std::endl;
-	  }
+	Renderer* rndr = (Renderer*)glfwGetWindowUserPointer(window);
 
-	  rndr->UpdatePosition(x2, y2);
-	 
-  }
+	if (action == GLFW_PRESS)
+	{
+		double x2, y2;
+		glfwGetCursorPos(window, &x2, &y2);
+		igl::opengl::glfw::Viewer* scn = rndr->GetScene();
+		bool found = false;
+		int i = 0, savedIndx = scn->selected_data_index;
+
+		for (; i < scn->data_list.size() && !found; i++)
+		{
+			double dist; //unused in ASS 3
+			scn->selected_data_index = i;
+			found = rndr->Picking(x2, y2, &dist);
+		}
+
+		if (!found)
+		{
+			std::cout << "not found " << std::endl;
+			scn->selected_data_index = -1;
+		}
+		else
+			std::cout << "found " << i - 1 << std::endl;
+		rndr->UpdatePosition(x2, y2);
+	}
 }
 
 
@@ -64,7 +55,12 @@ static void glfw_mouse_press(GLFWwindow* window, int button, int action, int mod
 static void glfw_mouse_scroll(GLFWwindow* window, double x, double y)
 {
 	Renderer* rndr = (Renderer*)glfwGetWindowUserPointer(window);
-	rndr->GetScene()->data().MyScale(Eigen::Vector3f(1 + y * 0.01,1 + y * 0.01,1+y*0.01));
+	if(rndr->GetScene()->selected_data_index == -1)
+		rndr->GetScene()->MyScale(Eigen::Vector3f(1 + y * 0.01, 1 + y * 0.01, 1 + y * 0.01));
+	else if(rndr->GetScene()->selected_data_index > 0)
+		rndr->GetScene()->data(1).MyScale(Eigen::Vector3f(1 + y * 0.01, 1 + y * 0.01, 1 + y * 0.01));
+	else
+		rndr->GetScene()->data().MyScale(Eigen::Vector3f(1 + y * 0.01,1 + y * 0.01,1+y*0.01));
 
 }
 
@@ -131,7 +127,7 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 		case 'T':
 		case 't':
 		{
-			printf("T pressed, TODO!\n");
+			scn->printTipPos();
 			break;
 		}
 		case 'R':
@@ -187,15 +183,15 @@ static void glfw_key_callback(GLFWwindow* window, int key, int scancode, int act
 			rndr->rotateWithKeys(GLFW_KEY_RIGHT);
 			break;
 		case ' ':
-			printf("space pressed, TODO!\n");
+			scn->toggleIK();
 			break;
 		case 'p':
 		case 'P':
-			printf("P pressed, TODO!\n");
+			scn->printRotation();
 			break;
 		case 'd':
 		case 'D':
-			printf("D pressed, TODO!\n");
+			scn->printBallPos();
 			break;
 		default: break;//do nothing
 		}

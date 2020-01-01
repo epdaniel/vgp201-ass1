@@ -164,10 +164,118 @@ namespace glfw
 	data().set_mesh(V, F);
   }
 
+  void Viewer::toggleIK() {
+	  if (IKon == true) {
+		fixAxis();
+	  }
+	  IKon = !IKon;
+  }
+
+  void Viewer::animateIK() {
+	  Eigen::Vector4f root4 = data_list[1].MakeTrans() * Eigen::Vector4f(0, -0.8, 0, 1);
+	  Eigen::Vector3f root = Eigen::Vector3f(root4[0], root4[1], root4[2]);
+
+	  Eigen::Vector4f ball4 = data_list[0].MakeTrans() * Eigen::Vector4f(0, 0, 0, 1);
+	  Eigen::Vector3f ball = Eigen::Vector3f(ball4[0], ball4[1], ball4[2]);
+
+	  double dist = (root - ball).norm();
+
+	  if (dist > 6.4) { //6.4 is arm length fully extended
+ 		  cout << "cannot reach" << endl;
+		  IKon = false;
+		  return;
+	  }
+	  Eigen::Vector4f E4;
+	  Eigen::Vector3f E;
+	  for(int i = 4; i > 0; i--){
+	   	  E4 = ParentsTrans(4) * data_list[4].MakeTrans() *  Eigen::Vector4f(0, 0.8, 0, 1);
+		  E = Eigen::Vector3f(E4[0], E4[1], E4[2]);
+		  dist = (E - ball).norm();
+		
+		  Eigen::Vector4f R4 = ParentsTrans(i) * data_list[i].MakeTrans() * Eigen::Vector4f(0, -0.8, 0, 1);
+		  Eigen::Vector3f R = Eigen::Vector3f(R4[0], R4[1], R4[2]);
+
+		  Eigen::Vector3f RE = E - R;
+		  Eigen::Vector3f RD = ball - R;
+	  
+		  float dot = RD.normalized().dot(RE.normalized());
+		  float alphaRad = acosf(dot); //alpah in radians
+		  if(dist > 0.3)
+			  alphaRad = alphaRad / 20;
+		  if (dot >= 1.0)
+			  alphaRad = 0;
+			
+		  Eigen::Vector3f cros = RE.cross(RD);
+		  cros.normalize();
+		  cros = ParentsInverseRot(i) * cros;
+		  data_list[i].MyRotate(cros, alphaRad, false);
+		  // ----- Debug Prints ----
+		  //float alpha =  alphaRad / M_PI * 180.0; //alpha in degrees
+		  //cout << "R: " << endl << R << endl << "E: " << endl << E << endl;
+		  //cout << "RE: " << endl << RE << endl << "RD: " << endl << RD << endl;
+		  //cout << "alpha: " << alphaRad << endl;
+		  //cout << "dot: " << dot << endl;
+	  }
+	  E4 = ParentsTrans(4) * data_list[4].MakeTrans() *  Eigen::Vector4f(0, 0.8, 0, 1);
+	  E = Eigen::Vector3f(E4[0], E4[1], E4[2]);
+	  dist = (E - ball).norm();
+	  if (dist < 0.1 || IKon == false) {
+		  IKon = false;
+		  fixAxis();
+	  }
+	  cout << "Distance: " << dist << endl;
+  }
+
+  void Viewer::fixAxis(){
+	float firstY = 0;
+	for (int i = 1; i <= 4; i++) {
+		Eigen::Matrix3f RU = data_list[i].Tout.rotation().matrix();
+		if (RU(1, 1) < 1.0) {
+			if (RU(1, 1) > -1.0) {
+				float y = atan2f(RU(1, 0), -RU(1, 2));
+				data_list[i].MyRotate(Eigen::Vector3f(0, 1, 0), -y, false);
+				if (i != 4) {
+					data_list[i+1].MyRotate(Eigen::Vector3f(0, 1, 0), y, true);
+				}
+			}
+		}
+	}
+  }
+
   Eigen::Matrix4f Viewer::ParentsTrans(int index) {
 	  if (index <= 1)
 		  return Eigen::Transform<float, 3, Eigen::Affine>::Identity().matrix();
 	  return ParentsTrans(index - 1) * data_list[index - 1].MakeTrans();
+  }
+  
+  Eigen::Matrix3f Viewer::ParentsInverseRot(int index) {
+	  Eigen::Matrix3f rot = data(index).Tout.rotation().matrix().inverse();
+	  int i = index - 1;
+	  while (i > 0) {
+		  rot = rot * data(i).Tout.rotation().matrix().inverse();
+		  i--;
+	  }
+	  return rot;
+  }
+
+  void Viewer::printTipPos() {
+	  for (int i = 1; i <= 4; i++) {
+		  Eigen::Vector4f pos4 = ParentsTrans(i) * data_list[i].MakeTrans() * Eigen::Vector4f(0, 0.8, 0, 1);
+		  Eigen::Vector3f pos3 = Eigen::Vector3f(pos4[0], pos4[1], pos4[2]);
+		  cout << "----- Tip " << i << " -----" << endl << pos3 << endl << "-----------------"  << endl;
+	  }
+  }
+
+  void Viewer::printRotation() {
+	  if (selected_data_index == -1)
+		  cout << "Rotation: " << endl << Tout.rotation().matrix() << endl;
+	  else cout << "Rotation: " << endl << data_list[selected_data_index].Tout.rotation().matrix() << endl;
+  }
+
+  void Viewer::printBallPos() {
+	  Eigen::Vector4f pos4 = data_list[0].MakeTrans() * Eigen::Vector4f(0, 0, 0, 1);
+	  Eigen::Vector3f pos3 = Eigen::Vector3f(pos4[0], pos4[1], pos4[2]);
+	  cout << "-- Destination --" << endl << pos3 << endl << "-----------------" << endl;
   }
 
   bool Viewer::simplify() {

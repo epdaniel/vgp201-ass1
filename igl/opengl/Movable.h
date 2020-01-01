@@ -13,10 +13,10 @@ public:
 	void MyScale(Eigen::Vector3f amt);
 	void SetCenterOfRotation(Eigen::Vector3f amt);
 
-private:
-	Eigen::Transform<float,3,Eigen::Affine> T;
 	Eigen::Transform<float, 3, Eigen::Affine> Tin;
 	Eigen::Transform<float, 3, Eigen::Affine> Tout;
+private:
+	Eigen::Transform<float,3,Eigen::Affine> T;
 
 };
 

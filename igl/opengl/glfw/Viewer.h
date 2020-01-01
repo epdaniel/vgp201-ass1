@@ -77,6 +77,14 @@ namespace glfw
 	bool optimalSimplify(bool doPrint);
 	//ASS3:
 	Eigen::Matrix4f ParentsTrans(int index);
+	Eigen::Matrix3f ParentsInverseRot(int index);
+	void printBallPos();
+	void printTipPos();
+	void printRotation();
+	void animateIK();
+	void toggleIK();
+	void fixAxis();
+
 	////////////////////////
     // Multi-mesh methods //
     ////////////////////////
@@ -127,7 +135,7 @@ public:
     //////////////////////
     // Member variables //
     //////////////////////
-
+	bool IKon = false;
     // Alec: I call this data_list instead of just data to avoid confusion with
     // old "data" variable.
     // Stores all the data that should be visualized
